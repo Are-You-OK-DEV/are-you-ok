@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">
+                        <i class="fas fa-envelope"></i> 邮箱验证
+                    </h2>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <strong>验证码已发送！</strong><br>
+                        验证码已发送到 <strong>{{ email }}</strong>，请检查邮件并输入验证码。
+                    </div>
+                    
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.verify_code.label(class="form-label") }}
+                            {% if form.verify_code.errors %}
+                                {{ form.verify_code(class="form-control is-invalid", placeholder="输入 6 位验证码") }}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.verify_code.errors %}
+                                        <i class="fas fa-exclamation-circle"></i> {{ error }}<br>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.verify_code(class="form-control text-center", placeholder="输入 6 位验证码", style="font-size: 1.5em; letter-spacing: 0.5em;") }}
+                                <small class="form-text text-muted">验证码有效期为 15 分钟</small>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                    
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">
+                            未收到验证码？
+                            <a href="{{ url_for('auth.resend_verify_code', email=email) }}">重新发送</a>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
