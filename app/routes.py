@@ -3,6 +3,9 @@ from flask_login import login_user, logout_user, login_required, current_user
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, EqualTo, Length, ValidationError
 from flask_wtf import FlaskForm
+from app.logger import get_logger
+
+logger = get_logger()
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -50,17 +53,23 @@ def register():
         from app import db
         from app.models import User
         
-        # 创建新用户
-        user = User(
-            username=form.username.data
-        )
-        user.set_password(form.password.data)
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        flash('注册成功！请登录', 'success')
-        return redirect(url_for('auth.login'))
+        try:
+            # 创建新用户
+            user = User(
+                username=form.username.data
+            )
+            user.set_password(form.password.data)
+            
+            db.session.add(user)
+            db.session.commit()
+            
+            logger.info(f"新用户注册成功: {form.username.data}")
+            flash('注册成功！请登录', 'success')
+            return redirect(url_for('auth.login'))
+        except Exception as e:
+            logger.error(f"用户注册失败: {form.username.data}, 错误: {str(e)}")
+            flash('注册失败，请重试', 'danger')
+            return redirect(url_for('auth.register'))
     
     return render_template('register.html', form=form)
 
@@ -78,10 +87,12 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         
         if user is None or not user.check_password(form.password.data):
+            logger.warning(f"登录失败: 用户名或密码错误，用户名: {form.username.data}")
             flash('用户名或密码错误', 'danger')
             return redirect(url_for('auth.login'))
         
         login_user(user)
+        logger.info(f"用户登录成功: {user.username}")
         flash(f'欢迎回来，{user.username}！', 'success')
         
         next_page = request.args.get('next')
@@ -93,6 +104,8 @@ def login():
 @login_required
 def logout():
     """用户登出"""
+    username = current_user.username
     logout_user()
+    logger.info(f"用户登出: {username}")
     flash('已登出', 'success')
     return redirect(url_for('auth.login'))
