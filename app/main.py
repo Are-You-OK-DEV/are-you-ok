@@ -3,6 +3,9 @@ from flask_login import login_required, current_user
 from datetime import datetime, timedelta, date
 from calendar import monthcalendar, month_name
 import calendar
+from app.logger import get_logger
+
+logger = get_logger()
 
 main_bp = Blueprint('main', __name__)
 
@@ -103,6 +106,7 @@ def new_diary():
         mood = request.form.get('mood', 3, type=int)
         
         if not title or not content:
+            logger.warning(f"用户 {current_user.username} 尝试保存空日记")
             flash('标题和内容不能为空', 'danger')
             return redirect(url_for('main.new_diary'))
         
@@ -115,6 +119,7 @@ def new_diary():
             diary.content = content
             diary.mood = mood
             diary.mood_label = _get_mood_label(mood)
+            logger.info(f"用户 {current_user.username} 更新日记 (ID: {diary.id}), 心情: {mood}")
             flash('日记已更新', 'success')
         else:
             # 创建新日记
@@ -127,6 +132,7 @@ def new_diary():
                 date=today
             )
             db.session.add(diary)
+            logger.info(f"用户 {current_user.username} 创建新日记, 标题: {title}, 心情: {mood}")
             flash('日记已保存', 'success')
         
         # 更新或创建每日统计
