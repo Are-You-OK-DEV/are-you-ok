@@ -1,17 +1,13 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from wtforms.validators import DataRequired, EqualTo, Length, ValidationError
 from flask_wtf import FlaskForm
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 class RegisterForm(FlaskForm):
     """注册表单"""
-    email = StringField('邮箱', validators=[
-        DataRequired('邮箱不能为空'),
-        Email('请输入有效的邮箱地址')
-    ])
     username = StringField('用户名', validators=[
         DataRequired('用户名不能为空'),
         Length(min=3, max=20, message='用户名长度需要在3-20之间')
@@ -26,12 +22,6 @@ class RegisterForm(FlaskForm):
     ])
     submit = SubmitField('注册')
     
-    def validate_email(self, field):
-        """验证邮箱是否已存在"""
-        from app.models import User
-        if User.query.filter_by(email=field.data).first():
-            raise ValidationError('该邮箱已被注册')
-    
     def validate_username(self, field):
         """验证用户名是否已存在"""
         from app.models import User
@@ -40,9 +30,8 @@ class RegisterForm(FlaskForm):
 
 class LoginForm(FlaskForm):
     """登录表单"""
-    email = StringField('邮箱', validators=[
-        DataRequired('邮箱不能为空'),
-        Email('请输入有效的邮箱地址')
+    username = StringField('用户名', validators=[
+        DataRequired('用户名不能为空')
     ])
     password = PasswordField('密码', validators=[
         DataRequired('密码不能为空')
@@ -63,7 +52,6 @@ def register():
         
         # 创建新用户
         user = User(
-            email=form.email.data,
             username=form.username.data
         )
         user.set_password(form.password.data)
@@ -87,10 +75,10 @@ def login():
     if form.validate_on_submit():
         from app.models import User
         
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query.filter_by(username=form.username.data).first()
         
         if user is None or not user.check_password(form.password.data):
-            flash('邮箱或密码错误', 'danger')
+            flash('用户名或密码错误', 'danger')
             return redirect(url_for('auth.login'))
         
         login_user(user)

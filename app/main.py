@@ -329,7 +329,8 @@ def profile():
                           total_diaries=total_diaries,
                           first_diary_date=first_diary_date,
                           streak=streak,
-                          user=current_user)
+                          user=current_user,
+                          now=datetime.utcnow())
 
 @main_bp.route('/api/mood-data')
 @login_required
