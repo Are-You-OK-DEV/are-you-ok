@@ -12,7 +12,34 @@
 由于时间以及技术问题，大部分代码其实是AI生成的，这里我表示抱歉。
 ## 项目结构
 ```
--
+.
+├── app
+│   ├── db.py
+│   ├── __init__.py
+│   ├── main.py
+│   ├── models.py
+│   ├── routes.py
+│   ├── static
+│   │   ├── css
+│   │   │   └── style.css
+│   │   └── js
+│   │       └── main.js
+│   └── templates
+│       ├── base.html
+│       ├── calendar.html
+│       ├── diary_detail.html
+│       ├── diary.html
+│       ├── index.html
+│       ├── login.html
+│       ├── profile.html
+│       ├── register.html
+│       └── stats.html
+├── LICENSE
+├── README.md
+├── requirements.txt
+└── run.py
+
+6 directories, 20 files
 ```
 ## 部署方法
 准备[Python3](https://www.python.org/downloads/release/python-31210/)环境  
