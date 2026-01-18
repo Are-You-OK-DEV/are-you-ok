@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}统计 - Are You OK{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6 class="text-muted">过去30天日记</h6>
+                <h2 class="text-primary">{{ diary_count }}</h2>
+                <small class="text-muted">篇</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6 class="text-muted">平均心情评分</h6>
+                <h2 class="text-success">{{ avg_mood }}</h2>
+                <small class="text-muted">/5</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6 class="text-muted">最常见心情</h6>
+                <h2>
+                    {% if mood_stats[5] >= mood_stats[4] and mood_stats[5] >= mood_stats[3] and mood_stats[5] >= mood_stats[2] and mood_stats[5] >= mood_stats[1] %}
+                        😄
+                    {% elif mood_stats[4] >= mood_stats[3] and mood_stats[4] >= mood_stats[2] and mood_stats[4] >= mood_stats[1] %}
+                        😊
+                    {% elif mood_stats[3] >= mood_stats[2] and mood_stats[3] >= mood_stats[1] %}
+                        😐
+                    {% elif mood_stats[2] >= mood_stats[1] %}
+                        😕
+                    {% else %}
+                        😢
+                    {% endif %}
+                </h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center">
+            <div class="card-body">
+                <h6 class="text-muted">记录天数百分比</h6>
+                <h2 class="text-info">{{ ((diary_count / 30) * 100)|round(0)|int }}%</h2>
+                <small class="text-muted">完成度</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">过去30天心情趋势</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="moodChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0">心情分布</h6>
+            </div>
+            <div class="card-body">
+                <div class="mood-distribution">
+                    <div class="mood-item">
+                        <span class="emoji">😄</span>
+                        <span class="label">很棒</span>
+                        <span class="count">{{ mood_stats[5] }}</span>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar" style="width: {{ (mood_stats[5] / (diary_count or 1) * 100) }}%; background-color: #198754;"></div>
+                        </div>
+                    </div>
+                    <div class="mood-item">
+                        <span class="emoji">😊</span>
+                        <span class="label">不错</span>
+                        <span class="count">{{ mood_stats[4] }}</span>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar" style="width: {{ (mood_stats[4] / (diary_count or 1) * 100) }}%; background-color: #0d6efd;"></div>
+                        </div>
+                    </div>
+                    <div class="mood-item">
+                        <span class="emoji">😐</span>
+                        <span class="label">一般</span>
+                        <span class="count">{{ mood_stats[3] }}</span>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar" style="width: {{ (mood_stats[3] / (diary_count or 1) * 100) }}%; background-color: #ffc107;"></div>
+                        </div>
+                    </div>
+                    <div class="mood-item">
+                        <span class="emoji">😕</span>
+                        <span class="label">不太好</span>
+                        <span class="count">{{ mood_stats[2] }}</span>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar" style="width: {{ (mood_stats[2] / (diary_count or 1) * 100) }}%; background-color: #fd7e14;"></div>
+                        </div>
+                    </div>
+                    <div class="mood-item">
+                        <span class="emoji">😢</span>
+                        <span class="label">很糟糕</span>
+                        <span class="count">{{ mood_stats[1] }}</span>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar" style="width: {{ (mood_stats[1] / (diary_count or 1) * 100) }}%; background-color: #dc3545;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.mood-distribution .mood-item {
+    display: grid;
+    grid-template-columns: 30px 50px 30px 1fr;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.mood-distribution .emoji {
+    font-size: 1.3em;
+    text-align: center;
+}
+
+.mood-distribution .label {
+    font-size: 0.85em;
+}
+
+.mood-distribution .count {
+    text-align: center;
+    font-weight: bold;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// 获取心情数据
+fetch('{{ url_for("main.api_mood_data") }}?days=30')
+    .then(response => response.json())
+    .then(data => {
+        const labels = data.map(d => new Date(d.date).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }));
+        const moods = data.map(d => d.mood);
+        
+        const ctx = document.getElementById('moodChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '心情评分',
+                    data: moods,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#0d6efd',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    spanGaps: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        min: 1,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

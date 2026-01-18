@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}日记详情 - Are You OK{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">{{ diary.title }}</h5>
+                        <small>{{ diary.date.strftime('%Y年%m月%d日 %A') }}</small>
+                    </div>
+                    <div class="fs-3">{{ diary.get_mood_emoji().split()[0] }}</div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <strong>心情评分：</strong> 
+                    <span class="badge bg-primary">{{ diary.mood }}/5 - {{ diary.get_mood_emoji() }}</span>
+                </div>
+                
+                <div class="diary-content" style="line-height: 1.8; white-space: pre-wrap;">
+                    {{ diary.content }}
+                </div>
+                
+                <hr>
+                
+                <div class="text-muted small">
+                    <p class="mb-1">
+                        <i class="fas fa-calendar"></i> 创建于：{{ diary.created_at.strftime('%Y年%m月%d日 %H:%M:%S') }}
+                    </p>
+                    {% if diary.updated_at != diary.created_at %}
+                    <p class="mb-0">
+                        <i class="fas fa-edit"></i> 最后修改：{{ diary.updated_at.strftime('%Y年%m月%d日 %H:%M:%S') }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card-footer bg-light">
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('main.new_diary') }}" class="btn btn-sm btn-warning">
+                        <i class="fas fa-edit"></i> 编辑
+                    </a>
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-arrow-left"></i> 返回
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.diary-content {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #0d6efd;
+}
+</style>
+{% endblock %}
