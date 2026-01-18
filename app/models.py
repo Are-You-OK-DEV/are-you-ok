@@ -1,8 +1,7 @@
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask_login import UserMixin
 from app import db
-import secrets
 
 
 class User(UserMixin, db.Model):
@@ -15,11 +14,6 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # 邮箱验证相关
-    is_verified = db.Column(db.Boolean, default=False)
-    verify_code = db.Column(db.String(6))
-    verify_code_expires = db.Column(db.DateTime)
-    
     # 关系
     diaries = db.relationship('Diary', backref='author', lazy='dynamic', cascade='all, delete-orphan')
     
@@ -30,18 +24,6 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         """检查密码"""
         return check_password_hash(self.password_hash, password)
-    
-    def generate_verify_code(self):
-        """生成邮箱验证码"""
-        self.verify_code = ''.join([str(i) for i in secrets.SystemRandom().sample(range(10), 6)])
-        self.verify_code_expires = datetime.utcnow() + timedelta(minutes=15)
-        return self.verify_code
-    
-    def is_verify_code_valid(self, code):
-        """验证验证码是否有效"""
-        return (self.verify_code == code and 
-                self.verify_code_expires and 
-                datetime.utcnow() < self.verify_code_expires)
     
     def __repr__(self):
         return f'<User {self.username}>'
